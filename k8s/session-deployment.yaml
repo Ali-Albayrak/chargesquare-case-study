@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: session
+  labels:
+    app: session
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: session
+  template:
+    metadata:
+      labels:
+        app: session
+    spec:
+      containers:
+        - name: session
+          image: chargesquare-session:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8002
+          envFrom:
+            - configMapRef:
+                name: chargesquare-config
+          env:
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: chargesquare-config
+                  key: SESSION_PORT
+            - name: STATION_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: chargesquare-config
+                  key: STATION_SERVICE_URL
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 5
+            periodSeconds: 5

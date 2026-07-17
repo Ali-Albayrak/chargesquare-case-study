@@ -30,15 +30,15 @@ app = FastAPI(title="ChargeSquare Session Service", lifespan=lifespan)
 app.add_exception_handler(AppError, app_error_handler)
 
 
-# @app.exception_handler(RequestValidationError)
-# async def validation_exception_handler(_request: Request, exc: RequestValidationError) -> JSONResponse:
-#     return JSONResponse(
-#         status_code=400,
-#         content={
-#             "error": "VALIDATION_ERROR",
-#             "message": "Missing or invalid request fields",
-#         },
-#     )
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(_request: Request, exc: RequestValidationError) -> JSONResponse:
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": "VALIDATION_ERROR",
+            "message": "Missing or invalid request fields",
+        },
+    )
 
 
 app.include_router(health.router)
