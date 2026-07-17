@@ -1,3 +1,15 @@
+ignore/
+.cursor/
+.specify/
+specs/
+
+
+# Kubernetes local secrets / kubeconfig (never commit)
+*.secret.yaml
+secrets/
+.kube/
+kubeconfig*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
