@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chargesquare-config
+data:
+  DATABASE_URL: postgresql+psycopg://chargesquare:chargesquare@postgres:5432/chargesquare
+  STATION_SERVICE_URL: http://station:8001
+  STATION_PORT: "8001"
+  SESSION_PORT: "8002"

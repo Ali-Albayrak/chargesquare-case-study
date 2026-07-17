@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: station
+  labels:
+    app: station
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: station
+  template:
+    metadata:
+      labels:
+        app: station
+    spec:
+      containers:
+        - name: station
+          image: chargesquare-station:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8001
+          envFrom:
+            - configMapRef:
+                name: chargesquare-config
+          env:
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: chargesquare-config
+                  key: STATION_PORT
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 5
+            periodSeconds: 5
