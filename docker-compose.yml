@@ -1,0 +1,77 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-chargesquare}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chargesquare}
+      POSTGRES_DB: ${POSTGRES_DB:-chargesquare}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  station:
+    build: ./station-service
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://chargesquare:chargesquare@db:5432/chargesquare}
+      PORT: ${STATION_PORT:-8001}
+    ports:
+      - "${STATION_PORT:-8001}:${STATION_PORT:-8001}"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import os,urllib.request; urllib.request.urlopen(f\"http://127.0.0.1:{os.environ.get('PORT','8001')}/health\")",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    restart: on-failure
+
+  session:
+    build: ./session-service
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://chargesquare:chargesquare@db:5432/chargesquare}
+      STATION_SERVICE_URL: ${STATION_SERVICE_URL:-http://station:8001}
+      PORT: ${SESSION_PORT:-8002}
+    ports:
+      - "${SESSION_PORT:-8002}:${SESSION_PORT:-8002}"
+    depends_on:
+      db:
+        condition: service_healthy
+      station:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import os,urllib.request; urllib.request.urlopen(f\"http://127.0.0.1:{os.environ.get('PORT','8002')}/health\")",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    restart: on-failure
+
+volumes:
+  pgdata:
