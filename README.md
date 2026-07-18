@@ -88,7 +88,13 @@ CI (GitHub Actions) on every push: install deps → pytest both services → `do
 
 Plain manifests under [`k8s/`](k8s/): Deployment + Service for Station and Session, plus a ConfigMap (`STATION_SERVICE_URL`, `DATABASE_URL`, ports) via `envFrom`.
 
-Validated with client-side review of plain YAML under `k8s/` (and `kubectl apply --dry-run=client -f k8s/` when a cluster/API is available). A full cluster apply was **not** run for this submission (Postgres and container images are assumed provided separately when applying for real).
+Validated with:
+
+```bash
+kubectl apply --dry-run=client -f k8s/
+```
+
+A full cluster apply was **not** run for this submission (Postgres and container images are assumed provided separately when applying for real).
 
 ## Assumptions
 

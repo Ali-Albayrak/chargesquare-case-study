@@ -61,5 +61,5 @@ Same start/stop windows as above. Recovery ideas: timeouts + compensating releas
 - **SQLAlchemy style:** some paths still use `db.query(...)`; migrating to 2.0 `select(...)` + `joinedload` for connector/tariff reads would be cleaner.
 - **Commit robustness:** not every write path wraps `commit()` in try/except with `rollback()`; that is the main robustness improvement before production.
 - **Structure:** routers are thin-ish, but further split of CRUD vs domain logic, and a single shared seed story across services, would clarify ownership.
-- No live Kubernetes apply (YAML reviewed; `kubectl` dry-run when an API is available); no Postgres Deployment in `k8s/`.
+- Kubernetes validated with `kubectl apply --dry-run=client -f k8s/` (no full cluster apply); no Postgres Deployment in `k8s/`.
 - No ingress, HPA, mesh, caching, rate limiting, brokers, sagas, cleanup jobs, or Stage 2 UI/auth.
