@@ -8,7 +8,7 @@ Short design notes for the Stage 1 slice. Locked choices live in [DECISIONS.md](
 |-------|--------|-----|
 | Language / framework | Python + FastAPI | Most experience with FastAPI; take-home needs a simple working slice |
 | Scope | Stage 1 only | Keep architecture extendable for Stage 2 later |
-| Repo layout | Monorepo | Simplest for a take-home review |
+| Repo layout | Monorepo | Simplest for a take-home review and easy to manage |
 | Database | Shared PostgreSQL | Enough for the essential slice without multi-DB ops |
 | Wallet | Folded into Session (`wallet/service.py`) | Clear boundary for a future Wallet Service extract |
 | Settlement | Sync in-process module | Keeps Session → Station as the required network hop |
@@ -20,7 +20,7 @@ Short design notes for the Stage 1 slice. Locked choices live in [DECISIONS.md](
 
 ## Implementation notes (why things look this way)
 
-**Money types.** API schemas use a Pydantic `Money` alias (`Decimal` + JSON serializer to a number), not `float`. Floats cannot represent money safely; `Decimal` keeps tariff math exact before rounding to 2 dp. Optional money fields are `Money | None` (e.g. cost before stop), not a separate “nullable money” type.
+**Money types.** API schemas use a Pydantic `Money` alias (`Decimal` + JSON serializer to a number), not `float`. Floats cannot represent money safely; `Decimal` keeps tariff math exact before rounding to 2 dp.
 
 **SQLite in tests.** Runtime uses PostgreSQL. Test `DATABASE_URL` is in-memory SQLite so pytest needs no Docker DB. The engine branch that enables `check_same_thread=False` / `StaticPool` exists only for that SQLite path.
 
