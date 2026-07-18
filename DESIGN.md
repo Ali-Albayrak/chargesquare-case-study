@@ -1,6 +1,6 @@
 # DESIGN — ChargeSquare Stage 1
 
-Short design notes for the Stage 1 slice. Locked choices live in [DECISIONS.md](DECISIONS.md). This page summarizes them, explains a few implementation choices, and records document-only recovery / consistency trade-offs.
+Short design notes for the Stage 1 slice. This page summarizes DECISIONS, explains a few implementation choices, and records document-only recovery / consistency trade-offs.
 
 ## Key decisions
 
