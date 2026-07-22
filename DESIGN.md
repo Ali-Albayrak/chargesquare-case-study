@@ -20,7 +20,7 @@ Short design notes for the Stage 1 slice. This page summarizes DECISIONS, explai
 
 ## Implementation notes (why things look this way)
 
-**Money types.** API schemas use a Pydantic `Money` alias (`Decimal` + JSON serializer to a number), not `float`. Floats cannot represent money safely; `Decimal` keeps tariff math exact before rounding to 2 dp.
+**Money / decimal types.** API schemas use a Pydantic `SafeDecimal` alias (`Decimal` + JSON serializer to a number), not `float`. Same alias covers prices, energy, and power — it is not a currency value object. Floats cannot represent money safely; `Decimal` keeps tariff math exact before rounding to 2 dp.
 
 **SQLite in tests.** Runtime uses PostgreSQL. Test `DATABASE_URL` is in-memory SQLite so pytest needs no Docker DB. The engine branch that enables `check_same_thread=False` / `StaticPool` exists only for that SQLite path.
 

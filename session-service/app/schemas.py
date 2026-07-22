@@ -6,7 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, field_valida
 
 from app.models import SessionStatus
 
-Money = Annotated[
+# Decimal in-process; float on the wire.
+SafeDecimal = Annotated[
     Decimal,
     PlainSerializer(lambda v: float(v), return_type=float, when_used="json"),
 ]
@@ -26,7 +27,7 @@ class StartSessionRequest(BaseModel):
 class StopSessionRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    energy_kwh: Money = Field(alias="energyKwh")
+    energy_kwh: SafeDecimal = Field(alias="energyKwh")
 
     @field_validator("energy_kwh")
     @classmethod
@@ -40,8 +41,8 @@ class TariffSnapshotOut(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     tariff_id: int = Field(alias="tariffId")
-    price_per_kwh: Money = Field(alias="pricePerKwh")
-    start_fee: Money | None = Field(alias="startFee")
+    price_per_kwh: SafeDecimal = Field(alias="pricePerKwh")
+    start_fee: SafeDecimal | None = Field(alias="startFee")
     currency: str
 
 
@@ -54,8 +55,8 @@ class SessionOut(BaseModel):
     status: SessionStatus
     started_at: datetime = Field(alias="startedAt")
     ended_at: datetime | None = Field(default=None, alias="endedAt")
-    energy_kwh: Money | None = Field(default=None, alias="energyKwh")
-    cost: Money | None = Field(default=None, alias="cost")
+    energy_kwh: SafeDecimal | None = Field(default=None, alias="energyKwh")
+    cost: SafeDecimal | None = Field(default=None, alias="cost")
     currency: str
-    wallet_balance_after: Money | None = Field(default=None, alias="walletBalanceAfter")
+    wallet_balance_after: SafeDecimal | None = Field(default=None, alias="walletBalanceAfter")
     tariff_snapshot: TariffSnapshotOut = Field(alias="tariffSnapshot")

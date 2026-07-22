@@ -5,7 +5,8 @@ from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
 
 from app.models import ConnectorStatus
 
-Money = Annotated[
+# Decimal in-process; float on the wire.
+SafeDecimal = Annotated[
     Decimal,
     PlainSerializer(lambda v: float(v), return_type=float, when_used="json"),
 ]
@@ -19,8 +20,8 @@ class TariffOut(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     tariff_id: int = Field(alias="tariffId")
-    price_per_kwh: Money = Field(alias="pricePerKwh")
-    start_fee: Money | None = Field(alias="startFee")
+    price_per_kwh: SafeDecimal = Field(alias="pricePerKwh")
+    start_fee: SafeDecimal | None = Field(alias="startFee")
     currency: str
 
 
@@ -30,7 +31,7 @@ class ConnectorOut(BaseModel):
     connector_id: int = Field(alias="connectorId")
     station_id: int = Field(alias="stationId")
     type: str
-    power_kw: Money = Field(alias="powerKw")
+    power_kw: SafeDecimal = Field(alias="powerKw")
     status: ConnectorStatus
     tariff: TariffOut
 
