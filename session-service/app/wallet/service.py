@@ -14,6 +14,7 @@ def debit(db: Session, user_id: int, amount: Decimal) -> Decimal:
             error="USER_NOT_FOUND",
             message=f"Wallet for user {user_id} was not found",
         )
+    # Reject: no negative balance (session stays ACTIVE).
     if wallet.balance < amount:
         raise AppError(
             status_code=409,

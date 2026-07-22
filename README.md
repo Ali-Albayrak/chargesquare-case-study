@@ -108,8 +108,6 @@ A full cluster apply was **not** run for this submission (Postgres and container
 
 ## Known limitations (honest)
 
-- **`walletBalanceAfter`**: correct on the **stop** response; on later GET/list of completed sessions it reflects the **current** wallet, not a value frozen at stop (should be persisted on the session).
-- Generic `VALIDATION_ERROR` body (little field-level detail).
 - Partial-failure / idempotent-retry recovery is prose-only in DESIGN — not implemented.
 
 ## Optional parts / Stage 2
@@ -122,12 +120,11 @@ About **1 working day** for Stage 1 (domain → compose → docs/k8s/CI).
 
 **Next (highest leverage from review notes):**
 
-1. Persist `wallet_balance_after` at stop; fetch wallet once in user session list
-2. `try`/`except` + `rollback()` around commits
-3. Richer validation error details; SQLAlchemy 2.0 `select` / `joinedload`
-4. More consistent seeding
-5. Convert price and currency fields to Money pydantic model
-6. Documented recovery ideas already in DESIGN — only then consider cleanup jobs / Stage 2
+1. `try`/`except` + `rollback()` around commits
+2. SQLAlchemy 2.0 `select` / `joinedload` (style only)
+3. More consistent seeding
+4. Convert price and currency fields to Money pydantic model
+5. Documented recovery ideas already in DESIGN — only then consider cleanup jobs / Stage 2
 
 ## Project layout
 

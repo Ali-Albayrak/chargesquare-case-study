@@ -1,12 +1,11 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 
 from app.db import Base, SessionLocal, engine
-from app.errors import AppError, app_error_handler
+from app.errors import AppError, app_error_handler, validation_error_handler
 from app.routers import health, sessions, users
 from app.seed import seed_baseline
 
@@ -28,17 +27,7 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="ChargeSquare Session Service", lifespan=lifespan)
 app.add_exception_handler(AppError, app_error_handler)
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(_request: Request, exc: RequestValidationError) -> JSONResponse:
-    return JSONResponse(
-        status_code=400,
-        content={
-            "error": "VALIDATION_ERROR",
-            "message": "Missing or invalid request fields",
-        },
-    )
+app.add_exception_handler(RequestValidationError, validation_error_handler)
 
 
 app.include_router(health.router)
