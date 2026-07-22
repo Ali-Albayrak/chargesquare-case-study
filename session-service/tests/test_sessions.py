@@ -39,7 +39,10 @@ def test_start_session_happy_path(client, fake_station, db_session):
 def test_validation_error_missing_fields(client, fake_station):
     response = client.post("/sessions", json={})
     assert response.status_code == 400
-    assert response.json()["error"] == "VALIDATION_ERROR"
+    body = response.json()
+    assert body["error"] == "VALIDATION_ERROR"
+    assert "userId" in body["message"]
+    assert "connectorId" in body["message"]
     fake_station.get_connector.assert_not_called()
     fake_station.occupy.assert_not_called()
 
@@ -170,7 +173,9 @@ def test_stop_validation_negative_energy(client, fake_station):
     session_id = created.json()["sessionId"]
     response = client.post(f"/sessions/{session_id}/stop", json={"energyKwh": -1})
     assert response.status_code == 400
-    assert response.json()["error"] == "VALIDATION_ERROR"
+    body = response.json()
+    assert body["error"] == "VALIDATION_ERROR"
+    assert "energyKwh" in body["message"]
     fake_station.release.assert_not_called()
 
 
@@ -179,7 +184,9 @@ def test_stop_validation_missing_energy(client, fake_station):
     session_id = created.json()["sessionId"]
     response = client.post(f"/sessions/{session_id}/stop", json={})
     assert response.status_code == 400
-    assert response.json()["error"] == "VALIDATION_ERROR"
+    body = response.json()
+    assert body["error"] == "VALIDATION_ERROR"
+    assert "energyKwh" in body["message"]
     fake_station.release.assert_not_called()
 
 
@@ -248,7 +255,31 @@ def test_list_user_sessions(client):
     assert len(body) == 1
     assert body[0]["sessionId"] == session_id
     assert body[0]["status"] == "COMPLETED"
+    assert Decimal(str(body[0]["walletBalanceAfter"])) == Decimal("391.75")
 
     empty = client.get("/users/999/sessions")
     assert empty.status_code == 200
     assert empty.json() == []
+
+
+def test_wallet_balance_after_frozen_on_session(client, fake_station, db_session):
+    """Receipt balance is snapshotted at stop; later wallet changes must not rewrite it."""
+    first = client.post("/sessions", json={"userId": 7, "connectorId": 10})
+    first_id = first.json()["sessionId"]
+    client.post(f"/sessions/{first_id}/stop", json={"energyKwh": 12.5})
+
+    # Second session on another connector further debits the live wallet.
+    second = client.post("/sessions", json={"userId": 7, "connectorId": 11})
+    second_id = second.json()["sessionId"]
+    client.post(f"/sessions/{second_id}/stop", json={"energyKwh": 0})
+
+    db_session.expire_all()
+    assert get_balance(db_session, 7) == Decimal("389.75")
+
+    got_first = client.get(f"/sessions/{first_id}")
+    assert Decimal(str(got_first.json()["walletBalanceAfter"])) == Decimal("391.75")
+
+    listed = client.get("/users/7/sessions")
+    by_id = {row["sessionId"]: row for row in listed.json()}
+    assert Decimal(str(by_id[first_id]["walletBalanceAfter"])) == Decimal("391.75")
+    assert Decimal(str(by_id[second_id]["walletBalanceAfter"])) == Decimal("389.75")

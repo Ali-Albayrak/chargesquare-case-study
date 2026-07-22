@@ -46,6 +46,7 @@ class ChargingSession(Base):
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     energy_kwh: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
     cost: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
+    wallet_balance_after: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
     snapshot_price_per_kwh: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)
     snapshot_start_fee: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
     snapshot_currency: Mapped[str] = mapped_column(String(3), nullable=False)

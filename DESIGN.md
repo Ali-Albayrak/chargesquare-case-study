@@ -56,8 +56,6 @@ Same start/stop windows as above. Recovery ideas: timeouts + compensating releas
 
 ## Known gaps / unfinished notes
 
-- **`walletBalanceAfter` on GET/list:** Stop response stores the post-debit balance correctly. Later `GET /sessions/{id}` and `GET /users/{userId}/sessions` re-read the **current** wallet balance for completed sessions, so they drift if the user is charged again later. Prefer persisting `wallet_balance_after` on the session row at stop. List also queries the wallet once per completed session instead of once per user.
-- **Validation errors:** `VALIDATION_ERROR` returns a generic message; field-level detail from Pydantic is not exposed yet.
 - **SQLAlchemy style:** some paths still use `db.query(...)`; migrating to 2.0 `select(...)` + `joinedload` for connector/tariff reads would be cleaner.
 - **Commit robustness:** not every write path wraps `commit()` in try/except with `rollback()`; that is the main robustness improvement before production.
 - **Structure:** routers are thin-ish, but further split of CRUD vs domain logic, and a single shared seed story across services, would clarify ownership.

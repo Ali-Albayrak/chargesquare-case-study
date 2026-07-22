@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime, timezone
-from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
@@ -9,15 +8,12 @@ from app.errors import AppError
 from app.models import ChargingSession, SessionStatus, User
 from app.schemas import SessionOut, StartSessionRequest, StopSessionRequest, TariffSnapshotOut
 from app.services.cost import calculate_cost
-from app.wallet import debit, get_balance
+from app.wallet import debit
 
 logger = logging.getLogger(__name__)
 
 
-def _to_session_out(
-    session: ChargingSession,
-    wallet_balance_after: Decimal | None = None,
-) -> SessionOut:
+def _to_session_out(session: ChargingSession) -> SessionOut:
     return SessionOut(
         sessionId=session.id,
         userId=session.user_id,
@@ -28,7 +24,7 @@ def _to_session_out(
         energyKwh=session.energy_kwh,
         cost=session.cost,
         currency=session.snapshot_currency,
-        walletBalanceAfter=wallet_balance_after,
+        walletBalanceAfter=session.wallet_balance_after,
         tariffSnapshot=TariffSnapshotOut(
             tariffId=session.snapshot_tariff_id,
             pricePerKwh=session.snapshot_price_per_kwh,
@@ -36,10 +32,6 @@ def _to_session_out(
             currency=session.snapshot_currency,
         ),
     )
-
-
-def _current_wallet_balance(db: Session, user_id: int) -> Decimal | None:
-    return get_balance(db, user_id)
 
 
 def start_session(
@@ -68,6 +60,7 @@ def start_session(
 
     client.occupy(request.connector_id)
 
+    # Snapshot tariff at start; stop bills these columns.
     session = ChargingSession(
         user_id=request.user_id,
         connector_id=request.connector_id,
@@ -125,10 +118,12 @@ def stop_session(
     session.ended_at = datetime.now(timezone.utc)
     session.energy_kwh = request.energy_kwh
     session.cost = cost
+    session.wallet_balance_after = balance_after
     db.add(session)
     db.commit()
     db.refresh(session)
 
+    # Best-effort release after local commit.
     client.release(session.connector_id)
 
     logger.info(
@@ -143,7 +138,7 @@ def stop_session(
         cost,
         balance_after,
     )
-    return _to_session_out(session, wallet_balance_after=balance_after)
+    return _to_session_out(session)
 
 
 def get_session(db: Session, session_id: int) -> SessionOut:
@@ -154,10 +149,7 @@ def get_session(db: Session, session_id: int) -> SessionOut:
             error="SESSION_NOT_FOUND",
             message=f"Session {session_id} was not found",
         )
-    balance = None
-    if session.status == SessionStatus.COMPLETED.value:
-        balance = _current_wallet_balance(db, session.user_id)
-    return _to_session_out(session, wallet_balance_after=balance)
+    return _to_session_out(session)
 
 
 def list_sessions_for_user(db: Session, user_id: int) -> list[SessionOut]:
@@ -167,11 +159,4 @@ def list_sessions_for_user(db: Session, user_id: int) -> list[SessionOut]:
         .order_by(ChargingSession.id.asc())
         .all()
     )
-    result: list[SessionOut] = []
-    for session in sessions:
-        balance = None
-        if session.status == SessionStatus.COMPLETED.value:
-            # TODO: why get current balance for each session? should be done once at the end of the list_sessions_for_user function
-            balance = _current_wallet_balance(db, session.user_id)
-        result.append(_to_session_out(session, wallet_balance_after=balance))
-    return result
+    return [_to_session_out(session) for session in sessions]
