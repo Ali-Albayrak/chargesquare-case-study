@@ -2,6 +2,7 @@ ignore/
 .cursor/
 .specify/
 specs/
+node_modules/
 
 
 # Kubernetes local secrets / kubeconfig (never commit)

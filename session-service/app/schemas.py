@@ -60,3 +60,17 @@ class SessionOut(BaseModel):
     currency: str
     wallet_balance_after: SafeDecimal | None = Field(default=None, alias="walletBalanceAfter")
     tariff_snapshot: TariffSnapshotOut = Field(alias="tariffSnapshot")
+
+
+class TopUpRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    amount: SafeDecimal = Field(gt=0)
+
+
+class WalletOut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    user_id: int = Field(alias="userId")
+    balance: SafeDecimal
+    currency: str

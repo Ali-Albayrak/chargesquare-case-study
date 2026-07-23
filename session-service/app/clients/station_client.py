@@ -5,8 +5,10 @@ from decimal import Decimal
 
 import httpx
 
+from app.auth import create_access_token
 from app.config import settings
 from app.errors import AppError
+from app.models import Role
 
 
 @dataclass(frozen=True)
@@ -24,11 +26,21 @@ class StationClient:
         self.base_url = (base_url or settings.station_service_url).rstrip("/")
         self.timeout = timeout
 
+    def _service_headers(self) -> dict[str, str]:
+        # Session→Station hop uses a short-lived service ADMIN JWT (same shared secret).
+        # TODO: Replace with a long-lived service token.
+        token = create_access_token(
+            username="session-service",
+            role=Role.ADMIN.value,
+            expires_minutes=5,
+        )
+        return {"Authorization": f"Bearer {token}"}
+
     def _request(self, method: str, path: str) -> httpx.Response:
         url = f"{self.base_url}{path}"
         try:
             with httpx.Client(timeout=self.timeout) as client:
-                return client.request(method, url)
+                return client.request(method, url, headers=self._service_headers())
         except httpx.RequestError as exc:
             raise AppError(
                 status_code=503,
@@ -50,7 +62,6 @@ class StationClient:
         response = self._request("POST", f"/connectors/{connector_id}/release")
         if response.status_code == 200:
             return
-        # Release conflicts/unknowns still surface as fail-fast dependency errors for Stage 1
         if response.status_code in (404, 409):
             raise AppError(
                 status_code=503,

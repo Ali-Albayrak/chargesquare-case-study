@@ -6,6 +6,14 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://chargesquare:chargesquare@localhost:5432/chargesquare"
     port: int = 8001
+    jwt_secret: str = "chargesquare-dev-jwt-secret-change-me-32b"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 60
+    cors_origins: str = "http://localhost:5173"
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
 
 settings = Settings()

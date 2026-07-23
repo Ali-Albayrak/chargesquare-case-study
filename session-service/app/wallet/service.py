@@ -24,3 +24,16 @@ def debit(db: Session, user_id: int, amount: Decimal) -> Decimal:
     wallet.balance = wallet.balance - amount
     db.add(wallet)
     return wallet.balance
+
+
+def credit(db: Session, user_id: int, amount: Decimal) -> Decimal:
+    wallet = db.query(Wallet).filter(Wallet.user_id == user_id).first()
+    if wallet is None:
+        raise AppError(
+            status_code=404,
+            error="USER_NOT_FOUND",
+            message=f"Wallet for user {user_id} was not found",
+        )
+    wallet.balance = wallet.balance + amount
+    db.add(wallet)
+    return wallet.balance

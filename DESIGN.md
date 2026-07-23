@@ -16,7 +16,7 @@ Short design notes for the Stage 1 slice. This page summarizes DECISIONS, explai
 | Currency / seed | TRY + consistent IDs | Seed, README, and tests share one worked example |
 | Insufficient balance | Reject `409 INSUFFICIENT_BALANCE` | Prepaid wallet; session stays ACTIVE; no debit |
 | Tariff | Snapshot columns at start | Mid-session price changes must not alter in-flight billing |
-| Stage 2 | Deferred | Skipping carries no penalty |
+| Stage 2 | JWT + React admin UI; ADMIN write = wallet top-up | Optional bonus; auth enforced on backend |
 
 ## Implementation notes (why things look this way)
 
@@ -60,4 +60,4 @@ Same start/stop windows as above. Recovery ideas: timeouts + compensating releas
 - **Commit robustness:** not every write path wraps `commit()` in try/except with `rollback()`; that is the main robustness improvement before production.
 - **Structure:** routers are thin-ish, but further split of CRUD vs domain logic, and a single shared seed story across services, would clarify ownership.
 - Kubernetes validated with `kubectl apply --dry-run=client -f k8s/` (no full cluster apply); no Postgres Deployment in `k8s/`.
-- No ingress, HPA, mesh, caching, rate limiting, brokers, sagas, cleanup jobs, or Stage 2 UI/auth.
+- No ingress, HPA, mesh, caching, rate limiting, brokers, sagas, or cleanup jobs.

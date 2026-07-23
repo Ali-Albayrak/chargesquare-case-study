@@ -11,7 +11,7 @@ services:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 5s
+      interval: 30s
       timeout: 5s
       retries: 20
       start_period: 30s
@@ -24,6 +24,10 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://chargesquare:chargesquare@db:5432/chargesquare}
       PORT: ${STATION_PORT:-8001}
+      JWT_SECRET: ${JWT_SECRET:-chargesquare-dev-jwt-secret-change-me-32b}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-60}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:8080}
     ports:
       - "${STATION_PORT:-8001}:${STATION_PORT:-8001}"
     depends_on:
@@ -37,7 +41,7 @@ services:
           "-c",
           "import os,urllib.request; urllib.request.urlopen(f\"http://127.0.0.1:{os.environ.get('PORT','8001')}/health\")",
         ]
-      interval: 5s
+      interval: 30s
       timeout: 5s
       retries: 12
       start_period: 15s
@@ -52,6 +56,10 @@ services:
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://chargesquare:chargesquare@db:5432/chargesquare}
       STATION_SERVICE_URL: ${STATION_SERVICE_URL:-http://station:8001}
       PORT: ${SESSION_PORT:-8002}
+      JWT_SECRET: ${JWT_SECRET:-chargesquare-dev-jwt-secret-change-me-32b}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-60}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:8080}
     ports:
       - "${SESSION_PORT:-8002}:${SESSION_PORT:-8002}"
     depends_on:
@@ -67,10 +75,27 @@ services:
           "-c",
           "import os,urllib.request; urllib.request.urlopen(f\"http://127.0.0.1:{os.environ.get('PORT','8002')}/health\")",
         ]
-      interval: 5s
+      interval: 30s
       timeout: 5s
       retries: 12
       start_period: 15s
+    restart: on-failure
+
+  admin-ui:
+    build: ./admin-ui
+    ports:
+      - "${ADMIN_UI_PORT:-8080}:80"
+    depends_on:
+      session:
+        condition: service_healthy
+      station:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: on-failure
 
 volumes:

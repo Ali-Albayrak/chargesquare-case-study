@@ -4,14 +4,21 @@ from unittest.mock import MagicMock
 
 os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
 os.environ["STATION_SERVICE_URL"] = "http://station.test"
+os.environ["JWT_SECRET"] = "test-jwt-secret-chargesquare-32b"
+
+os.environ["JWT_ALGORITHM"] = "HS256"
+os.environ["JWT_EXPIRE_MINUTES"] = "60"
+os.environ["CORS_ORIGINS"] = "http://localhost:5173"
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import sessionmaker
 
+from app.auth import create_access_token
 from app.clients.station_client import StationConnector
 from app.db import Base, engine, get_db
 from app.main import app
+from app.models import Role
 from app.seed import seed_baseline
 from app.services import session_service
 
@@ -41,6 +48,18 @@ def fake_station():
     client.occupy.return_value = None
     client.release.return_value = None
     return client
+
+
+@pytest.fixture()
+def admin_headers():
+    token = create_access_token(username="admin", role=Role.ADMIN.value)
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture()
+def viewer_headers():
+    token = create_access_token(username="viewer", role=Role.VIEWER.value)
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture()
