@@ -1,6 +1,6 @@
 # DESIGN — ChargeSquare Stage 1
 
-Short design notes for the Stage 1 slice. Locked choices live in [DECISIONS.md](DECISIONS.md). This page summarizes them, explains a few implementation choices, and records document-only recovery / consistency trade-offs.
+Short design notes for the Stage 1 slice. This page summarizes DECISIONS, explains a few implementation choices, and records document-only recovery / consistency trade-offs.
 
 ## Key decisions
 
@@ -20,7 +20,7 @@ Short design notes for the Stage 1 slice. Locked choices live in [DECISIONS.md](
 
 ## Implementation notes (why things look this way)
 
-**Money types.** API schemas use a Pydantic `Money` alias (`Decimal` + JSON serializer to a number), not `float`. Floats cannot represent money safely; `Decimal` keeps tariff math exact before rounding to 2 dp.
+**Money / decimal types.** API schemas use a Pydantic `SafeDecimal` alias (`Decimal` + JSON serializer to a number), not `float`. Same alias covers prices, energy, and power — it is not a currency value object. Floats cannot represent money safely; `Decimal` keeps tariff math exact before rounding to 2 dp.
 
 **SQLite in tests.** Runtime uses PostgreSQL. Test `DATABASE_URL` is in-memory SQLite so pytest needs no Docker DB. The engine branch that enables `check_same_thread=False` / `StaticPool` exists only for that SQLite path.
 
@@ -56,10 +56,8 @@ Same start/stop windows as above. Recovery ideas: timeouts + compensating releas
 
 ## Known gaps / unfinished notes
 
-- **`walletBalanceAfter` on GET/list:** Stop response stores the post-debit balance correctly. Later `GET /sessions/{id}` and `GET /users/{userId}/sessions` re-read the **current** wallet balance for completed sessions, so they drift if the user is charged again later. Prefer persisting `wallet_balance_after` on the session row at stop. List also queries the wallet once per completed session instead of once per user.
-- **Validation errors:** `VALIDATION_ERROR` returns a generic message; field-level detail from Pydantic is not exposed yet.
 - **SQLAlchemy style:** some paths still use `db.query(...)`; migrating to 2.0 `select(...)` + `joinedload` for connector/tariff reads would be cleaner.
 - **Commit robustness:** not every write path wraps `commit()` in try/except with `rollback()`; that is the main robustness improvement before production.
 - **Structure:** routers are thin-ish, but further split of CRUD vs domain logic, and a single shared seed story across services, would clarify ownership.
-- No live Kubernetes apply (YAML reviewed; `kubectl` dry-run when an API is available); no Postgres Deployment in `k8s/`.
+- Kubernetes validated with `kubectl apply --dry-run=client -f k8s/` (no full cluster apply); no Postgres Deployment in `k8s/`.
 - No ingress, HPA, mesh, caching, rate limiting, brokers, sagas, cleanup jobs, or Stage 2 UI/auth.

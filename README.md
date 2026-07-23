@@ -73,7 +73,7 @@ Errors use `{ "error": "CODE", "message": "..." }`.
 - **Shared PostgreSQL** — one DB for Stage 1 simplicity (tests use in-memory SQLite only)
 - **Monorepo** (`station-service/`, `session-service/`) — easy local/CI layout
 - **Wallet in Session** — in-process settle; Session → Station remains the required network hop
-- **Money** — Pydantic `Money` = `Decimal` (serialized as a JSON number). We avoid naive `float` so tariff math stays exact; final cost uses `ROUND_HALF_UP` to 2 decimals
+- **Money** — Pydantic `SafeDecimal` = `Decimal` (serialized as a JSON number). We avoid naive `float` so tariff math stays exact; final cost uses `ROUND_HALF_UP` to 2 decimals
 
 ## How to run tests
 
@@ -88,7 +88,13 @@ CI (GitHub Actions) on every push: install deps → pytest both services → `do
 
 Plain manifests under [`k8s/`](k8s/): Deployment + Service for Station and Session, plus a ConfigMap (`STATION_SERVICE_URL`, `DATABASE_URL`, ports) via `envFrom`.
 
-Validated with client-side review of plain YAML under `k8s/` (and `kubectl apply --dry-run=client -f k8s/` when a cluster/API is available). A full cluster apply was **not** run for this submission (Postgres and container images are assumed provided separately when applying for real).
+Validated with:
+
+```bash
+kubectl apply --dry-run=client -f k8s/
+```
+
+A full cluster apply was **not** run for this submission (Postgres and container images are assumed provided separately when applying for real).
 
 ## Assumptions
 
@@ -102,8 +108,6 @@ Validated with client-side review of plain YAML under `k8s/` (and `kubectl apply
 
 ## Known limitations (honest)
 
-- **`walletBalanceAfter`**: correct on the **stop** response; on later GET/list of completed sessions it reflects the **current** wallet, not a value frozen at stop (should be persisted on the session).
-- Generic `VALIDATION_ERROR` body (little field-level detail).
 - Partial-failure / idempotent-retry recovery is prose-only in DESIGN — not implemented.
 
 ## Optional parts / Stage 2
@@ -116,12 +120,10 @@ About **1 working day** for Stage 1 (domain → compose → docs/k8s/CI).
 
 **Next (highest leverage from review notes):**
 
-1. Persist `wallet_balance_after` at stop; fetch wallet once in user session list
-2. `try`/`except` + `rollback()` around commits
-3. Richer validation error details; SQLAlchemy 2.0 `select` / `joinedload`
-4. More consistent seeding
-5. Convert price and currency fields to Money pydantic model
-6. Documented recovery ideas already in DESIGN — only then consider cleanup jobs / Stage 2
+1. `try`/`except` + `rollback()` around commits
+2. SQLAlchemy 2.0 `select` / `joinedload` (style only)
+3. More consistent seeding
+4. Documented recovery ideas already in DESIGN — only then consider cleanup jobs / Stage 2
 
 ## Project layout
 
