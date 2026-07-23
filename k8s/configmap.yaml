@@ -7,3 +7,7 @@ data:
   STATION_SERVICE_URL: http://station:8001
   STATION_PORT: "8001"
   SESSION_PORT: "8002"
+  JWT_SECRET: chargesquare-dev-jwt-secret-change-me-32b
+  JWT_ALGORITHM: HS256
+  JWT_EXPIRE_MINUTES: "60"
+  CORS_ORIGINS: http://localhost:5173

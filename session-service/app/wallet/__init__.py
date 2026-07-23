@@ -1,13 +1,13 @@
-"""Wallet module boundary — sync in-process debit/settle."""
+"""Wallet module boundary — sync in-process debit/settle/top-up."""
 
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
 from app.models import Wallet
-from app.wallet.service import debit
+from app.wallet.service import credit, debit
 
-__all__ = ["get_balance", "debit"]
+__all__ = ["get_balance", "debit", "credit"]
 
 
 def get_balance(db: Session, user_id: int) -> Decimal | None:

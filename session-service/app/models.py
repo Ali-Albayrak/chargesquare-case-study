@@ -13,6 +13,11 @@ class SessionStatus(str, enum.Enum):
     COMPLETED = "COMPLETED"
 
 
+class Role(str, enum.Enum):
+    VIEWER = "VIEWER"
+    ADMIN = "ADMIN"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -21,6 +26,17 @@ class User(Base):
 
     wallet: Mapped["Wallet | None"] = relationship(back_populates="user", uselist=False)
     sessions: Mapped[list["ChargingSession"]] = relationship(back_populates="user")
+
+
+class AuthAccount(Base):
+    """Demo login accounts — not a real user directory."""
+
+    __tablename__ = "auth_accounts"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    username: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    role: Mapped[str] = mapped_column(String(16), nullable=False)
 
 
 class Wallet(Base):
