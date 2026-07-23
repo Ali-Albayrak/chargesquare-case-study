@@ -28,6 +28,19 @@ jobs:
           pip install -r requirements.txt
           pytest -q
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: admin-ui/package-lock.json
+
+      - name: Build admin-ui
+        working-directory: admin-ui
+        run: |
+          npm ci
+          npm run build
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -36,3 +49,6 @@ jobs:
 
       - name: Build session image
         run: docker build -t chargesquare-session:ci ./session-service
+
+      - name: Build admin-ui image
+        run: docker build -t chargesquare-admin-ui:ci ./admin-ui

@@ -8,7 +8,7 @@ EV charging backend: **Station Service** (connectors, tariffs, occupy/release) a
 docker compose up --build
 ```
 
-Optional: `cp .env.example .env` then adjust. Wait until Station (`:8001`) and Session (`:8002`) are healthy.
+Optional: `cp .env.example .env` then adjust. Wait until Station (`:8001`), Session (`:8002`), and Admin UI (`:8080`) are up.
 
 Cold start with a stale DB volume:
 
@@ -16,6 +16,8 @@ Cold start with a stale DB volume:
 docker compose down -v
 docker compose up --build
 ```
+
+Admin UI: open [http://localhost:8080](http://localhost:8080) (nginx serves the SPA and proxies `/session-api` → Session, `/station-api` → Station). Demo logins: `admin`/`admin`, `viewer`/`viewer`.
 
 ## Sample requests (auth → start → stop → top-up)
 
@@ -52,13 +54,13 @@ curl -s -X POST http://localhost:8002/users/7/wallet/top-up \
 
 Expected stop receipt (before top-up): `cost` **108.25**, `walletBalanceAfter` **391.75**, status `COMPLETED`.
 
-## Admin UI
+## Admin UI (local Vite, optional)
 
 ```bash
 cd admin-ui && npm install && npm run dev
 ```
 
-Opens Vite on `http://localhost:5173` (proxies Session `:8002` and Station `:8001`). Log in as `admin`/`admin` or `viewer`/`viewer`.
+Opens Vite on `http://localhost:5173` (proxies Session `:8002` and Station `:8001`). Prefer compose `:8080` for the full stack.
 
 ## Main endpoints
 
@@ -156,7 +158,7 @@ About **1 working day** Stage 1 + focused Stage 2 auth/UI pass.
 station-service/     # connectors, tariffs, occupy/release (+ JWT)
 session-service/     # sessions, cost, wallet, login, top-up
 admin-ui/            # React + Vite Stage 2 panel
-docker-compose.yml   # db + station + session
+docker-compose.yml   # db + station + session + admin-ui
 k8s/                 # plain YAML manifests
 .github/workflows/   # CI
 SECURITY.md          # Stage 2 auth notes

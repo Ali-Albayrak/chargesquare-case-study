@@ -10,4 +10,4 @@ data:
   JWT_SECRET: chargesquare-dev-jwt-secret-change-me-32b
   JWT_ALGORITHM: HS256
   JWT_EXPIRE_MINUTES: "60"
-  CORS_ORIGINS: http://localhost:5173
+  CORS_ORIGINS: http://localhost:5173,http://localhost:8080
